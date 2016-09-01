@@ -7,21 +7,13 @@ var path = require('path');
 var pg = require('pg');
 var connectionString = require(path.join(__dirname, '../', 'config'));
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  now = moment().format('HH:mm')
-  res.redirect('/' + now);
-});
-
-/* GET current snap. */
-router.get('/:time', function(req, res, next) {
-  var time = req.params.time;
+function snapView(time, res) {
   var snaps = []
 
-  if (!req.params.time || req.params.time == 'now') {
+  if (!time || time == 'now') {
     time = moment().format('HH:mm')
   } else {
-    time = moment(req.params.time, 'HH:mm').format('HH:mm');
+    time = moment(time, 'HH:mm').format('HH:mm');
     if (time == 'Invalid date') {
       return next(new Error('Invalid time'))
     }
@@ -50,13 +42,23 @@ router.get('/:time', function(req, res, next) {
           snap = {}
           if (snaps.length) {
             snap = snaps[Math.floor(Math.random() * snaps.length)];
-            snap.exists = true;
+            return res.render('index', snap);
           } else {
-            snap.exists = false;
+            return res.render('missing', {"time": time});
           }
-          return res.render('index', snap);
       });
   });
+}
+
+/* GET home page. */
+router.get('/', function(req, res, next) {
+  return snapView('now', res);
+});
+
+/* GET current snap. */
+router.get('/:time', function(req, res, next) {
+  var time = req.params.time;
+  return snapView(time, res);
 });
 
 module.exports = router;

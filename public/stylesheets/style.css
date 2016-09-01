@@ -1,13 +1,27 @@
-body {
-  padding: 10px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
-}
-
 a {
   color: #00B7FF;
+}
+
+body {
+  margin: 20px;
+  font: 14px "Arial", Arial, Arial, sans-serif;
+}
+
+#banner {
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 20px;
+  color: #333;
 }
 
 #snap {
   display: block;
   margin: auto;
+}
+
+#missing {
+  display: block;
+  margin: auto;
+  text-align: center;
 }
