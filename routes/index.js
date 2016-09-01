@@ -47,7 +47,7 @@ router.get('/:time', function(req, res, next) {
       // After all data is returned, close connection and return results
       query.on('end', function() {
           done();
-          snap = {};
+          snap = {}
           if (snaps.length) {
             snap = snaps[Math.floor(Math.random() * snaps.length)];
             snap.exists = true;
