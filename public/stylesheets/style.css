@@ -7,21 +7,27 @@ body {
   font: 14px "Arial", Arial, Arial, sans-serif;
 }
 
+.container {
+  text-align: center;
+  display: block;
+  margin: auto;
+}
+
 #banner {
   margin-bottom: 20px;
-  text-align: center;
   font-weight: bold;
   font-size: 20px;
   color: #333;
 }
 
 #snap {
-  display: block;
-  margin: auto;
+
 }
 
 #missing {
-  display: block;
-  margin: auto;
-  text-align: center;
+
+}
+
+.error {
+  color: red;
 }

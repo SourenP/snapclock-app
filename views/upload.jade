@@ -1,0 +1,11 @@
+extends layout
+
+block content
+  #missing In need of snaps T_T
+  form(method="post",enctype="multipart/form-data",action="/upload")
+    p
+      input(type="time", name="snap_time", value= time)
+    p
+      input(type="file", name="newsnap")
+    p
+      input(type="submit")
