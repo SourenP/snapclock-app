@@ -7,8 +7,8 @@ var path = require('path');
 var pg = require('pg');
 var multer = require('multer');
 var logger = require("../utils/logger");
-var connectionString = require(path.join(__dirname, '../', 'config'));
-
+var config = require(path.join(__dirname, '../', 'config'));
+var aws = require('aws-sdk')
 
 /* ==HELPERS== */
 function snapView(time, res) {
@@ -26,7 +26,7 @@ function snapView(time, res) {
   }
 
   // Get a Postgres client from the connection pool
-  pg.connect(connectionString, function(err, client, done) {
+  pg.connect(config.DATABASE_URL, function(err, client, done) {
       // Handle connection errors
       if(err) {
         done();
@@ -41,7 +41,6 @@ function snapView(time, res) {
           logger.warn(err.message);
           res.render('error', { message: err.message });
         }
-        logger.silly(results)
       });
 
       // Stream results back one row at a time
@@ -57,14 +56,16 @@ function snapView(time, res) {
             snap = snaps[Math.floor(Math.random() * snaps.length)];
             return res.render('index', snap);
           } else {
-            return res.render('missing', {"time": time});
+            return res.render('upload', { "emot": "◔ ⌣ ◔",
+                                          "message": " I don't have any snaps for " + moment().format("HH:mm") + ".",
+                                          "time": time});
           }
       });
   });
 };
 
 function addPicture(res, path, time) {
-  pg.connect(connectionString, function(err, client, done) {
+  pg.connect(config.DATABASE_URL, function(err, client, done) {
       // Handle connection errors
       if(err) {
         done();
@@ -80,9 +81,8 @@ function addPicture(res, path, time) {
           return res.render('error', { message: err.message });
         }
         done();
-        logger.silly(results)
-        logger.info("[%s]\t A snap with the path %s for the time %s.", moment().format(), path, time)
-        return res.render('thankyou', {"time": time, "path": path})
+        logger.silly("[%s]\t A snap with the path %s for the time %s.", moment().format(), path, time)
+        return res.render('thankyou', {"emot": "◔ ں ◔", "time": time})
       });
   });
 };
@@ -95,11 +95,32 @@ router.get('/', function(req, res, next) {
   return snapView('now', res);
 });
 
-/* GET home page. */
-router.get('/upload', function(req, res, next) {
-  return res.render('upload', {});
+router.get('/sign', function(req, res) {
+  aws.config.update({accessKeyId: config.AWS_ACCESS_KEY_ID, secretAccessKey: config.AWS_SECRET_ACCESS_KEY});
+
+  var s3 = new aws.S3()
+  var options = {
+    Bucket: config.S3_BUCKET,
+    Key: req.query.file_name,
+    Expires: 60,
+    ContentType: req.query.file_type,
+    ACL: 'public-read'
+  }
+
+  s3.getSignedUrl('putObject', options, function(err, data){
+    if(err) return res.send(err)
+
+    res.json({
+      signed_request: data,
+      url: 'https://s3.amazonaws.com/' + config.S3_BUCKET + '/' + req.query.file_name
+    })
+  })
 });
 
+/* GET home page. */
+router.get('/upload', function(req, res, next) {
+  return res.render('upload', {"message": "<3"});
+});
 
 /* GET current snap. */
 router.get('/:time', function(req, res, next) {
@@ -107,29 +128,11 @@ router.get('/:time', function(req, res, next) {
   return snapView(time, res);
 });
 
-/* GET thank you. */
-router.get('/thankyou', function(req, res, next) {
-  var time = req.params.time;
-  return res.render('thankyou', {"time": time});
-});
-
 /* Upload image */
-var upload = multer({
-  limits: {fileSize: 5000000},
-  dest: 'public/images/uploads/',
-}).single('newsnap');
 router.post('/upload', function(req, res, next) {
-  upload(req, res, function (err) {
-    if (err) {
-      // An error occurred when uploading
-      logger.warn(err.message);
-      res.render('error', { message: err.message });
-    }
-    // Everything went fine
-    if (req.file)
-      return addPicture(res, req.file.path, req.body.snap_time)
-  });
+  time  = req.body.snap_time
+  path = req.body.picture_url
+  return addPicture(res, path, time)
 });
-
 
 module.exports = router;

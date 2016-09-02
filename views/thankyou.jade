@@ -1,6 +1,11 @@
 extends layout
 
 block content
-  .container
-    .thankyou Thank you for uploading #{time}!
-    img(src= path, id='snap')
+  .emotion #{emot}
+  br
+  .message Thank you for uploading for #{time}.
+    br 
+    | Check tomorrow at 
+    a(href="http://snapchatclock.com/" + time) snapchatclock.com/#{time} 
+    br
+    | to see your snap!

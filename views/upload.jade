@@ -1,11 +1,21 @@
 extends layout
 
 block content
-  #missing In need of snaps T_T
-  form(method="post",enctype="multipart/form-data",action="/upload")
+  .emotion #{emot}
+  br
+  .message #{message}
+  .message Any chance you could help?
+  br
+  .forms
     p
-      input(type="time", name="snap_time", value= time)
+      label(class="btn btn-default btn-file") Choose a file
+        input(type='file' id='snapfile' name='snapfile') 
     p
-      input(type="file", name="newsnap")
-    p
-      input(type="submit")
+      img(id='loading' src='public/images/loading.gif')
+      img(id='minisnap', border='1' src='public/images/placeholder_snap.png')
+      
+    form(method="post", action="/upload", id="submitform")
+      p
+        input(type="time", name="snap_time", value= time)
+      p
+        input(class="btn btn-success" type="submit", value='Upload' id="uploadbutton" disabled)
