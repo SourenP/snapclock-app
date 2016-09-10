@@ -4,7 +4,7 @@ block content
   .emotion #{emot}
   br
   .message #{message}
-  .message Any chance you could help?
+  .message Can you help by either uploading a time snap screenshot or sending me a snap using my handle below?
   br
   .forms
     p
@@ -12,7 +12,8 @@ block content
         input(type='file' id='snapfile' name='snapfile') 
     p
       img(id='loading' src='public/images/loading.gif')
-      img(id='minisnap', border='1' src='public/images/placeholder_snap.png')
+      img(id='minisnap', border='1' src='public/images/snap_qr.png')
+      .message @souren
       
     form(method="post", action="/upload", id="submitform")
       p

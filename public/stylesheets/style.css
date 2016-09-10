@@ -54,3 +54,8 @@ body {
     cursor: inherit;
     display: block;
 }
+
+.name {
+  height: 600px;
+  padding: 10px;
+}

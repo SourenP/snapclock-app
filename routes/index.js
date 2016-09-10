@@ -11,6 +11,8 @@ var config = require(path.join(__dirname, '../', 'config'));
 var aws = require('aws-sdk')
 
 /* ==HELPERS== */
+
+/* Fetch snap from db */
 function snapView(time, res) {
   var snaps = []
 
@@ -27,65 +29,99 @@ function snapView(time, res) {
 
   // Get a Postgres client from the connection pool
   pg.connect(config.DATABASE_URL, function(err, client, done) {
-      // Handle connection errors
-      if(err) {
-        done();
-        logger.warn(err);
-        res.render('error', { message: err.message });
-      }
+    // Handle connection errors
+    if(err) {
+      done();
+      logger.warn(err);
+      res.render('error', { message: err.message });
+    }
 
-      // SQL Query > Select Data
-      var query = client.query("SELECT * FROM snaps WHERE time=$1 and verified=true", [time], function(err, results) {
-        if(err) {
-          done();
-          logger.warn(err.message);
-          res.render('error', { message: err.message });
-        }
-      });
-
-      // Stream results back one row at a time
-      query.on('row', function(row) {
-          snaps.push(row);
-      });
-
-      // After all data is returned, close connection and return results
-      query.on('end', function() {
-          done();
-          snap = {}
-          if (snaps.length) {
-            snap = snaps[Math.floor(Math.random() * snaps.length)];
-            return res.render('index', snap);
-          } else {
-            return res.render('upload', { "emot": "◔ ⌣ ◔",
-                                          "message": " I don't have any snaps for " + moment().format("HH:mm") + ".",
-                                          "time": time});
-          }
-      });
-  });
-};
-
-function addPicture(res, path, time) {
-  pg.connect(config.DATABASE_URL, function(err, client, done) {
-      // Handle connection errors
+    // SQL Query > Select Data
+    var query = client.query("SELECT * FROM snaps WHERE time=$1 and verified=true", [time], function(err, results) {
       if(err) {
         done();
         logger.warn(err.message);
         res.render('error', { message: err.message });
       }
+    });
 
-      // SQL Query > Insert Data
-      client.query("INSERT INTO snaps(time, picture_dir, verified) values($1, $2, $3)", [time, path, false], function(err, results) {
-        if (err) {
+    // Stream results back one row at a time
+    query.on('row', function(row) {
+        snaps.push(row);
+    });
+
+    // After all data is returned, close connection and return results
+    query.on('end', function() {
+        snap = {}
+        if (snaps.length) {
           done();
-          logger.warn(err.message);
-          return res.render('error', { message: err.message });
+          snap = snaps[Math.floor(Math.random() * snaps.length)];
+          return res.render('index', snap);
+        } else {
+          return res.render('upload', { "emot": "◔ ⌣ ◔",
+                                        "message": " I don't have any snaps for " + moment().format("hh:mm a") + ".",
+                                        "time": time});
         }
-        done();
-        logger.silly("[%s]\t A snap with the path %s for the time %s.", moment().format(), path, time)
-        return res.render('thankyou', {"emot": "◔ ں ◔", "time": time})
-      });
+    });
   });
 };
+
+/* Add snap to db */
+function addPicture(res, path, time) {
+  pg.connect(config.DATABASE_URL, function(err, client, done) {
+    // Handle connection errors
+    if(err) {
+      done();
+      logger.warn(err.message);
+      res.render('error', { message: err.message });
+    }
+
+    // SQL Query > Insert Data
+    client.query("INSERT INTO snaps(time, picture_dir, verified) values($1, $2, $3)", [time, path, false], function(err, results) {
+      if (err) {
+        done();
+        logger.warn(err.message);
+        return res.render('error', { message: err.message });
+      }
+      done();
+      logger.silly("[%s]\t A snap with the path %s for the time %s.", moment().format(), path, time)
+      return res.render('thankyou', {"emot": "◔ ں ◔", "time": time})
+    });
+  });
+};
+
+function getPermission(res, name) {
+  var snaps = []
+  // Get a Postgres client from the connection pool
+  pg.connect(config.DATABASE_URL, function(err, client, done) {
+    // Handle connection errors
+    if(err) {
+      done();
+      logger.warn(err);
+      res.render('error', { message: err.message });
+    }
+
+    // SQL Query > Select Data
+    var query = client.query("SELECT * FROM snaps WHERE tag=$1", [name], function(err, results) {
+      if(err) {
+        done();
+        logger.warn(err.message);
+        res.render('error', { message: err.message });
+      }
+    });
+
+    // Stream results back one row at a time
+    query.on('row', function(row) {
+        snaps.push(row);
+    });
+
+    // After all data is returned, close connection and return results
+    query.on('end', function() {
+        done();
+        return res.render('permission', { "snaps": snaps });
+    });
+  });
+}
 
 
 /* ==ROUTES== */
@@ -95,6 +131,7 @@ router.get('/', function(req, res, next) {
   return snapView('now', res);
 });
 
+/* GET s3 signature for upload */
 router.get('/sign', function(req, res) {
   aws.config.update({accessKeyId: config.AWS_ACCESS_KEY_ID, secretAccessKey: config.AWS_SECRET_ACCESS_KEY});
 
@@ -128,11 +165,17 @@ router.get('/:time', function(req, res, next) {
   return snapView(time, res);
 });
 
-/* Upload image */
+/* POST add upload to db */
 router.post('/upload', function(req, res, next) {
-  time  = req.body.snap_time
-  path = req.body.picture_url
+  var time  = req.body.snap_time
+  var path = req.body.picture_url
   return addPicture(res, path, time)
+});
+
+/* GET permission */
+router.get('/permission/:name', function(req, res, next) {
+  var name  = req.params.name
+  return getPermission(res, name)
 });
 
 module.exports = router;
