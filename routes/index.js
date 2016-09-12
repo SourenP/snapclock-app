@@ -22,7 +22,8 @@ function snapView(time, res) {
     time = moment(time, 'HH:mm').format('HH:mm');
     if (time == 'Invalid date') {
       err = new Error('Invalid time')
-      logger.warn(err);
+      console.log(err);
+      logger.warn(err.message);
       res.render('error', { message: err.message });
     }
   }
@@ -32,6 +33,7 @@ function snapView(time, res) {
     // Handle connection errors
     if(err) {
       done();
+      console.log(err);
       logger.warn(err);
       res.render('error', { message: err.message });
     }
@@ -40,7 +42,8 @@ function snapView(time, res) {
     var query = client.query("SELECT * FROM snaps WHERE time=$1 and verified=true", [time], function(err, results) {
       if(err) {
         done();
-        logger.warn(err.message);
+        console.log(err);
+        logger.warn(err);
         res.render('error', { message: err.message });
       }
     });
@@ -72,7 +75,8 @@ function addPicture(res, path, time) {
     // Handle connection errors
     if(err) {
       done();
-      logger.warn(err.message);
+      console.log(err);
+      logger.warn(err);
       res.render('error', { message: err.message });
     }
 
@@ -80,7 +84,8 @@ function addPicture(res, path, time) {
     client.query("INSERT INTO snaps(time, picture_dir, verified) values($1, $2, $3)", [time, path, false], function(err, results) {
       if (err) {
         done();
-        logger.warn(err.message);
+        console.log(err);
+        logger.warn(err);
         return res.render('error', { message: err.message });
       }
       done();
@@ -97,6 +102,7 @@ function getPermission(res, name) {
     // Handle connection errors
     if(err) {
       done();
+      console.log(err);
       logger.warn(err);
       res.render('error', { message: err.message });
     }
@@ -105,7 +111,8 @@ function getPermission(res, name) {
     var query = client.query("SELECT * FROM snaps WHERE tag=$1", [name], function(err, results) {
       if(err) {
         done();
-        logger.warn(err.message);
+        console.log(err);
+        logger.warn(err);
         res.render('error', { message: err.message });
       }
     });
