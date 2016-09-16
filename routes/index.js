@@ -23,7 +23,7 @@ function snapView(time, res) {
     if (time == 'Invalid date') {
       err = new Error('Invalid time')
       console.log(err);
-      logger.warn(err.message);
+      logger.info(err);
       res.render('error', { message: err.message });
     }
   }
@@ -34,7 +34,7 @@ function snapView(time, res) {
     if(err) {
       done();
       console.log(err);
-      logger.warn(err);
+      logger.info(err);
       res.render('error', { message: err.message });
     }
 
@@ -43,7 +43,7 @@ function snapView(time, res) {
       if(err) {
         done();
         console.log(err);
-        logger.warn(err);
+        logger.info(err);
         res.render('error', { message: err.message });
       }
     });
@@ -76,7 +76,7 @@ function addPicture(res, path, time) {
     if(err) {
       done();
       console.log(err);
-      logger.warn(err);
+      logger.info(err);
       res.render('error', { message: err.message });
     }
 
@@ -85,7 +85,7 @@ function addPicture(res, path, time) {
       if (err) {
         done();
         console.log(err);
-        logger.warn(err);
+        logger.info(err);
         return res.render('error', { message: err.message });
       }
       done();
@@ -103,7 +103,7 @@ function getPermission(res, name) {
     if(err) {
       done();
       console.log(err);
-      logger.warn(err);
+      logger.info(err);
       res.render('error', { message: err.message });
     }
 
@@ -112,7 +112,7 @@ function getPermission(res, name) {
       if(err) {
         done();
         console.log(err);
-        logger.warn(err);
+        logger.info(err);
         res.render('error', { message: err.message });
       }
     });
