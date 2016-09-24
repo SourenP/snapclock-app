@@ -13,16 +13,17 @@ var aws = require('aws-sdk')
 /* ==HELPERS== */
 
 /* Fetch snap from db */
-function snapView(time, res) {
+function snapView(time, req, res) {
   var snaps = []
 
   if (!time || time == 'now') {
-    time = moment().format('HH:mm')
+    a_time = moment(req.query.date).format('hh:mm a')
+    time = moment(req.query.date).format('HH:mm')
   } else {
-    time = moment(time, 'HH:mm').format('HH:mm');
+    a_time = moment(time, 'HH:mm').format('hh:mm a')
+    time = moment(time, 'HH:mm').format('HH:mm')
     if (time == 'Invalid date') {
       err = new Error('Invalid time')
-      console.log(err);
       logger.info(err);
       res.render('error', { message: err.message });
     }
@@ -62,7 +63,7 @@ function snapView(time, res) {
           return res.render('index', snap);
         } else {
           return res.render('upload', { "emot": "◔ ⌣ ◔",
-                                        "message": " I don't have any snaps for " + moment().format("hh:mm a") + ".",
+                                        "message": " I don't have any snaps for " + a_time + ".",
                                         "time": time});
         }
     });
@@ -135,7 +136,7 @@ function getPermission(res, name) {
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  return snapView('now', res);
+  return snapView('now', req, res);
 });
 
 /* GET s3 signature for upload */
@@ -169,7 +170,7 @@ router.get('/upload', function(req, res, next) {
 /* GET current snap. */
 router.get('/:time', function(req, res, next) {
   var time = req.params.time;
-  return snapView(time, res);
+  return snapView(time, req, res);
 });
 
 /* POST add upload to db */
