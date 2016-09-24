@@ -1,20 +1,17 @@
 extends layout
 
 block content
-  .emotion #{emot}
-  br
   .message #{message}
   .message Can you help by either uploading a time snap screenshot or sending me a snap using my handle below?
   br
   .forms
     p
-      label(class="btn btn-default btn-file") Choose a file
-        input(type='file' id='snapfile' name='snapfile') 
-    p
       img(id='loading' src='public/images/loading.gif')
       img(id='minisnap', border='1' src='public/images/snap_qr.png')
       .message @souren
-      
+    p
+      label(class="btn btn-default btn-file") Choose a file
+        input(type='file' id='snapfile' name='snapfile') 
     form(method="post", action="/upload", id="submitform")
       p
         input(type="time", name="snap_time", value= time)
