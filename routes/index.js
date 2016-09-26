@@ -12,6 +12,13 @@ var aws = require('aws-sdk')
 
 /* ==HELPERS== */
 
+/* Init DB */
+var pool = new pg.Pool(config.DATABASE_CONFIG);
+
+pool.on('error', function (err, client) {
+  logger.info(err)
+});w
+
 /* Fetch snap from db */
 function snapView(time, req, res) {
   var snaps = []
@@ -30,66 +37,45 @@ function snapView(time, req, res) {
   }
 
   // Get a Postgres client from the connection pool
-  pg.connect(config.DATABASE_URL, function(err, client, done) {
-    // Handle connection errors
+  logger.info("Connecting to DB");
+  pool.connect(function(err, client, done) {
     if(err) {
-      done();
-      console.log(err);
       logger.info(err);
-      res.render('error', { message: err.message });
+      return res.render('error', { message: err.message });
     }
-
-    // SQL Query > Select Data
-    var query = client.query("SELECT * FROM snaps WHERE time=$1 and verified=true", [time], function(err, results) {
+    logger.info("Querying");
+    client.query("SELECT * FROM snaps WHERE time=$1 and verified=true", [time], function(err, results) {
+      done();
       if(err) {
-        done();
-        console.log(err);
         logger.info(err);
-        res.render('error', { message: err.message });
+        return res.render('error', { message: err.message });
       }
-    });
-
-    // Stream results back one row at a time
-    query.on('row', function(row) {
-        snaps.push(row);
-    });
-
-    // After all data is returned, close connection and return results
-    query.on('end', function() {
-        snap = {}
-        if (snaps.length) {
-          done();
-          snap = snaps[Math.floor(Math.random() * snaps.length)];
-          return res.render('index', snap);
-        } else {
-          return res.render('upload', { "emot": "◔ ⌣ ◔",
-                                        "message": " I don't have any snaps for " + a_time + ".",
-                                        "time": time});
-        }
+      snaps = results.rows
+      if (snaps.length) {
+        snap = snaps[Math.floor(Math.random() * snaps.length)];
+        return res.render('index', snap);
+      } else {
+        return res.render('upload', { "emot": "◔ ⌣ ◔",
+                                      "message": " I don't have any snaps for " + a_time + ".",
+                                      "time": time});
+      }
     });
   });
 };
 
 /* Add snap to db */
 function addPicture(res, path, time) {
-  pg.connect(config.DATABASE_URL, function(err, client, done) {
-    // Handle connection errors
+  pool.connect(function(err, client, done) {
     if(err) {
-      done();
-      console.log(err);
       logger.info(err);
-      res.render('error', { message: err.message });
+      return res.render('error', { message: err.message });
     }
-
-    // SQL Query > Insert Data
     client.query("INSERT INTO snaps(time, picture_dir, verified) values($1, $2, $3)", [time, path, false], function(err, results) {
+      done();
       if (err) {
-        done();
-        console.log(err);
         logger.info(err);
         return res.render('error', { message: err.message });
       }
-      done();
       logger.silly("[%s]\t A snap with the path %s for the time %s.", moment().format(), path, time)
       return res.render('thankyou', {"emot": "◔ ں ◔", "time": time})
     });
@@ -98,35 +84,19 @@ function addPicture(res, path, time) {
 
 function getPermission(res, name) {
   var snaps = []
-  // Get a Postgres client from the connection pool
-  pg.connect(config.DATABASE_URL, function(err, client, done) {
-    // Handle connection errors
+  pool.connect(function(err, client, done) {
     if(err) {
-      done();
-      console.log(err);
       logger.info(err);
-      res.render('error', { message: err.message });
+      return res.render('error', { message: err.message });
     }
-
-    // SQL Query > Select Data
-    var query = client.query("SELECT * FROM snaps WHERE tag=$1", [name], function(err, results) {
+    client.query("SELECT * FROM snaps WHERE tag=$1", [name], function(err, results) {
+      done();
       if(err) {
-        done();
-        console.log(err);
         logger.info(err);
-        res.render('error', { message: err.message });
+        return res.render('error', { message: err.message });
       }
-    });
-
-    // Stream results back one row at a time
-    query.on('row', function(row) {
-        snaps.push(row);
-    });
-
-    // After all data is returned, close connection and return results
-    query.on('end', function() {
-        done();
-        return res.render('permission', { "snaps": snaps });
+      snaps = results.rows
+      return res.render('permission', { "snaps": snaps });
     });
   });
 }
